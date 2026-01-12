@@ -1,0 +1,7 @@
+{
+  "name": "VocalSynth Pro - Advanced Engine",
+  "description": "A world-class vocal-to-MIDI workstation with professional synth controls like glide, unison, and ADSR, featuring AI-powered session insights.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
