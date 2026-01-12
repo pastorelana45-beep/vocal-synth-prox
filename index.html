@@ -1,15 +1,35 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VocalSynth Pro</title>
+    
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VocalSynth">
+    
+    <link rel="manifest" href="/manifest.json">
+    
+    <link rel="apple-touch-icon" href="/logo192.png">
+    <link rel="icon" href="/favicon.ico">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      body { background-color: black; margin: 0; color: white; }
+      body { 
+        background-color: black; 
+        margin: 0; 
+        color: white; 
+        /* Impedisce il rimbalzo dello scroll su iOS */
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
       ::-webkit-scrollbar { display: none; }
     </style>
+
 <script type="importmap">
 {
   "imports": {
