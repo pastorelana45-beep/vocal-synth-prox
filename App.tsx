@@ -11,7 +11,7 @@ import {
   Maximize2, Box, Guitar, Drum, Piano, Check, Disc2, Cpu, Flame, PartyPopper
 } from 'lucide-react';
 import { INSTRUMENTS, SCALES, SAMPLE_MAPS, MIN_NOTE_DURATION } from './constants';
-import { Instrument, WorkstationMode, RecordedNote, StudioSession, ScaleType } from './types';
+import { Instrument, WorkstationMode, RecordedNote, StudioSession, ScaleType } from './types.ts';
 import { detectPitch, frequencyToMidiFloat, midiToNoteName } from './services/pitchDetection';
 import { GoogleGenAI } from "@google/genai";
 
