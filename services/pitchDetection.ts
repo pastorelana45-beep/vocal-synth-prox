@@ -1,58 +1,60 @@
-
 export function detectPitch(buffer: Float32Array, sampleRate: number): number | null {
   const SIZE = buffer.length;
+  
+  // 1. RIMOZIONE OFFSET DC (Centra l'onda per evitare errori nei bassi come Seven Nation Army)
+  let mean = 0;
+  for (let i = 0; i < SIZE; i++) mean += buffer[i];
+  mean /= SIZE;
+  for (let i = 0; i < SIZE; i++) buffer[i] -= mean;
+
+  // 2. CALCOLO VOLUME (RMS)
   let rms = 0;
   for (let i = 0; i < SIZE; i++) rms += buffer[i] * buffer[i];
-  if (Math.sqrt(rms / SIZE) < 0.01) return null;
+  const rmsValue = Math.sqrt(rms / SIZE);
+  if (rmsValue < 0.01) return null; // Troppo silenzio
 
-  let r1 = 0, r2 = SIZE - 1, threshold = 0.1;
-  for (let i = 0; i < SIZE / 2; i++) {
-    if (Math.abs(buffer[i]) < threshold) { r1 = i; break; }
+  // 3. NORMALIZZAZIONE (Rende forti anche i suoni deboli)
+  let maxAmp = 0;
+  for (let i = 0; i < SIZE; i++) {
+    if (Math.abs(buffer[i]) > maxAmp) maxAmp = Math.abs(buffer[i]);
   }
-  for (let i = 1; i < SIZE / 2; i++) {
-    if (Math.abs(buffer[SIZE - i]) < threshold) { r2 = SIZE - i; break; }
-  }
+  const normalizedBuffer = new Float32Array(SIZE);
+  for (let i = 0; i < SIZE; i++) normalizedBuffer[i] = buffer[i] / maxAmp;
 
-  const buf = buffer.slice(r1, r2);
-  const N = buf.length;
-  const correlations = new Float32Array(N);
-
-  for (let offset = 0; offset < N; offset++) {
-    for (let i = 0; i < N - offset; i++) {
-      correlations[offset] += buf[i] * buf[i + offset];
+  // 4. AUTOCORRELAZIONE (Con Center Clipping per pulire le armoniche di Halo)
+  const correlations = new Float32Array(SIZE);
+  for (let offset = 0; offset < SIZE; offset++) {
+    for (let i = 0; i < SIZE - offset; i++) {
+      // Center Clipping applicato al volo: ignora vibrazioni minuscole
+      const val1 = Math.abs(normalizedBuffer[i]) < 0.2 ? 0 : normalizedBuffer[i];
+      const val2 = Math.abs(normalizedBuffer[i + offset]) < 0.2 ? 0 : normalizedBuffer[i + offset];
+      correlations[offset] += val1 * val2;
     }
   }
 
+  // 5. TROVA IL PICCO (Cerca il primo picco significativo dopo lo zero)
   let d = 0;
   while (correlations[d] > correlations[d + 1]) d++;
+  
   let maxval = -1, maxpos = -1;
-  for (let i = d; i < N; i++) {
+  for (let i = d; i < SIZE; i++) {
     if (correlations[i] > maxval) {
       maxval = correlations[i];
       maxpos = i;
     }
   }
 
-  let T0 = maxpos;
-  if (T0 === -1) return null;
+  // Controllo qualità: se il picco è troppo debole rispetto al segnale, è rumore
+  if (maxpos === -1 || (maxval / correlations[0]) < 0.3) return null;
 
-  const x1 = correlations[T0 - 1], x2 = correlations[T0], x3 = correlations[T0 + 1];
-  const a = (x1 + x3 - 2 * x2) / 2;
-  const b = (x3 - x1) / 2;
-  if (a !== 0) T0 = T0 - b / (2 * a);
+  // 6. INTERPOLAZIONE PARABOLICA (Precisione millimetrica per Halo)
+  let T0 = maxpos;
+  if (maxpos > 0 && maxpos < SIZE - 1) {
+    const x1 = correlations[maxpos - 1], x2 = correlations[maxpos], x3 = correlations[maxpos + 1];
+    const a = (x1 + x3 - 2 * x2) / 2;
+    const b = (x3 - x1) / 2;
+    if (a !== 0) T0 = T0 - b / (2 * a);
+  }
 
   return sampleRate / T0;
-}
-
-export function frequencyToMidiFloat(freq: number): number {
-  return 12 * (Math.log(freq / 440) / Math.log(2)) + 69;
-}
-
-export function frequencyToMidi(freq: number): number {
-  return Math.round(frequencyToMidiFloat(freq));
-}
-
-export function midiToNoteName(midi: number): string {
-  const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-  return notes[midi % 12] + (Math.floor(midi / 12) - 1);
 }
