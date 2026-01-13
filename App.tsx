@@ -1,4 +1,5 @@
-Import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import * as Tone from 'tone';
 import { 
   Music, Settings, Mic, Play, Square, Volume2, Trash2, 
