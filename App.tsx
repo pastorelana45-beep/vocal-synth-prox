@@ -1,4 +1,5 @@
-Import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import * as Tone from 'tone';
 import { 
   Music, Settings, Mic, Play, Square, Volume2, Trash2, 
@@ -760,5 +761,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
-Puoi mettermi dove ce la sezione engine un preset per la chitarra elettrica e altri preset
