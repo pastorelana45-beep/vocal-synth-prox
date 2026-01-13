@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import * as Tone from 'tone';
 import { 
@@ -237,8 +236,17 @@ const App: React.FC = () => {
     setIsInstrumentLoading(false);
   }, []);
 
-  const applyPreset = (type: 'HIPHOP' | 'HOUSE' | 'CLASSIC' | '90S' | 'ROCK' | 'DANCE') => {
+  const applyPreset = (type: 'HIPHOP' | 'HOUSE' | 'CLASSIC' | '90S' | 'ROCK' | 'DANCE' | 'E-GUITAR' | 'POP-PIANO' | 'SYNTHWAVE') => {
     switch(type) {
+      case 'E-GUITAR':
+        setGlide(0.02); setVibratoDepth(0.15); setUnisonThickness(0.7); setDelayWet(0.1); setReverbWet(0.15); setAttack(0.01); setRelease(1.2);
+        break;
+      case 'POP-PIANO':
+        setGlide(0.0); setVibratoDepth(0.0); setUnisonThickness(0.1); setDelayWet(0.05); setReverbWet(0.3); setAttack(0.001); setRelease(0.8);
+        break;
+      case 'SYNTHWAVE':
+        setGlide(0.15); setVibratoDepth(0.3); setUnisonThickness(0.6); setDelayWet(0.3); setReverbWet(0.5); setAttack(0.1); setRelease(1.0);
+        break;
       case 'HIPHOP':
         setGlide(0.01); setVibratoDepth(0.0); setUnisonThickness(0.6); setDelayWet(0.05); setReverbWet(0.1); setAttack(0.01); setRelease(0.2);
         break;
@@ -267,7 +275,6 @@ const App: React.FC = () => {
       const duration = Math.max(...processed.map(n => n.time + n.duration), 2) + 2;
       
       const buffer = await Tone.Offline(async (context) => {
-        // Setup offline chain
         const masterLimiter = new Tone.Limiter(-0.5).toDestination();
         const mainReverb = new Tone.Reverb({ decay: 2.8, wet: reverbWet }).connect(masterLimiter);
         const delay = new Tone.FeedbackDelay("8n", 0.15).connect(mainReverb);
@@ -282,7 +289,6 @@ const App: React.FC = () => {
         const leadG = new Tone.Gain(leadVol).connect(vibrato);
         const chordG = new Tone.Gain(chordVol).connect(vibrato);
 
-        // Re-apply instrument settings for offline context
         const config = SAMPLE_MAPS[session.instrumentId];
         let leadS, chordS;
 
@@ -308,7 +314,6 @@ const App: React.FC = () => {
         });
       }, duration);
 
-      // Convert to WAV and download
       const wav = audioBufferToWav(buffer);
       const blob = new Blob([wav], { type: 'audio/wav' });
       const url = URL.createObjectURL(blob);
@@ -320,7 +325,6 @@ const App: React.FC = () => {
     } catch (e) { console.error(e); } finally { setIsRendering(null); }
   };
 
-  // Helper to convert AudioBuffer to WAV
   const audioBufferToWav = (buffer: AudioBuffer) => {
     let numOfChan = buffer.numberOfChannels,
         length = buffer.length * numOfChan * 2 + 44,
@@ -459,16 +463,13 @@ const App: React.FC = () => {
   const getAiInsights = async (session: StudioSession) => {
     setIsAnalyzing(session.id);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: "TU_API_KEY" }); // Sostituisci con la tua chiave
       const prompt = `Pro produttore: sessione ${session.instrumentId}, bpm ${session.bpm}. Fornisci un breve consiglio creativo basato sulle attuali tendenze musicali.`;
       const response = await ai.models.generateContent({ 
-        model: 'gemini-3-pro-preview', 
-        contents: prompt,
-        config: { tools: [{ googleSearch: {} }] }
+        model: 'gemini-1.5-pro', 
+        contents: prompt
       });
-      const groundingChunks = (response.candidates?.[0]?.groundingMetadata?.groundingChunks as any[]) || [];
-      const links = groundingChunks.filter(c => c.web || c.maps);
-      setAiAnalysis({ id: session.id, text: response.text || "Consiglio generato.", links: links });
+      setAiAnalysis({ id: session.id, text: response.text || "Consiglio generato." });
     } catch (err) { setAiAnalysis({ id: session.id, text: "AI indisponibile al momento." }); } finally { setIsAnalyzing(null); }
   };
 
@@ -560,29 +561,32 @@ const App: React.FC = () => {
                 <div className="space-y-4">
                    <h4 className="text-[8px] font-black text-zinc-500 uppercase tracking-[0.4em]">Sonic Profiles (Presets)</h4>
                    <div className="grid grid-cols-3 gap-2">
-                      <button onClick={() => applyPreset('HIPHOP')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-purple-500 transition-all"><Disc2 size={16} className="text-purple-400" /><span className="text-[6px] font-black uppercase">Hip Hop</span></button>
-                      <button onClick={() => applyPreset('HOUSE')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-blue-500 transition-all"><Zap size={16} className="text-blue-400" /><span className="text-[6px] font-black uppercase">House</span></button>
-                      <button onClick={() => applyPreset('CLASSIC')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-emerald-500 transition-all"><Waves size={16} className="text-emerald-400" /><span className="text-[6px] font-black uppercase">Classic</span></button>
-                      <button onClick={() => applyPreset('90S')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-red-500 transition-all"><Sparkles size={16} className="text-red-400" /><span className="text-[6px] font-black uppercase">90s Lead</span></button>
-                      <button onClick={() => applyPreset('ROCK')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-orange-500 transition-all"><Flame size={16} className="text-orange-400" /><span className="text-[6px] font-black uppercase">Rock</span></button>
-                      <button onClick={() => applyPreset('DANCE')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-pink-500 transition-all"><PartyPopper size={16} className="text-pink-400" /><span className="text-[6px] font-black uppercase">Dance</span></button>
+                      <button onClick={() => applyPreset('E-GUITAR')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-orange-500 transition-all"><Guitar size={16} className="text-orange-400" /><span className="text-[6px] font-black uppercase text-white">E-Guitar</span></button>
+                      <button onClick={() => applyPreset('POP-PIANO')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-cyan-400 transition-all"><Piano size={16} className="text-cyan-400" /><span className="text-[6px] font-black uppercase text-white">Pop Piano</span></button>
+                      <button onClick={() => applyPreset('SYNTHWAVE')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-indigo-500 transition-all"><Stars size={16} className="text-indigo-500" /><span className="text-[6px] font-black uppercase text-white">Synthwave</span></button>
+                      
+                      <button onClick={() => applyPreset('HIPHOP')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-purple-500 transition-all"><Disc2 size={16} className="text-purple-400" /><span className="text-[6px] font-black uppercase text-white">Hip Hop</span></button>
+                      <button onClick={() => applyPreset('HOUSE')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-blue-500 transition-all"><Zap size={16} className="text-blue-400" /><span className="text-[6px] font-black uppercase text-white">House</span></button>
+                      <button onClick={() => applyPreset('CLASSIC')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-emerald-500 transition-all"><Waves size={16} className="text-emerald-400" /><span className="text-[6px] font-black uppercase text-white">Classic</span></button>
+                      <button onClick={() => applyPreset('90S')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-red-500 transition-all"><Sparkles size={16} className="text-red-400" /><span className="text-[6px] font-black uppercase text-white">90s Lead</span></button>
+                      <button onClick={() => applyPreset('ROCK')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-orange-500 transition-all"><Flame size={16} className="text-orange-400" /><span className="text-[6px] font-black uppercase text-white">Rock</span></button>
+                      <button onClick={() => applyPreset('DANCE')} className="flex flex-col items-center gap-2 p-3 bg-zinc-900 rounded-xl border border-white/5 hover:border-pink-500 transition-all"><PartyPopper size={16} className="text-pink-400" /><span className="text-[6px] font-black uppercase text-white">Dance</span></button>
                    </div>
                 </div>
 
-                {/* Synthesis Controls */}
                 <div className="space-y-6 pt-4 border-t border-white/5">
                    <h4 className="text-[8px] font-black text-zinc-500 uppercase tracking-[0.4em]">Voice & Modulation</h4>
                    <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-4">
-                        <div className="flex justify-between items-center"><span className="text-[7px] font-black uppercase text-zinc-500">Glide (Portamento)</span><span className="text-[7px] text-white">{glide.toFixed(2)}s</span></div>
+                        <div className="flex justify-between items-center"><span className="text-[7px] font-black uppercase text-zinc-500">Glide</span><span className="text-[7px] text-white">{glide.toFixed(2)}s</span></div>
                         <input type="range" min="0" max="0.5" step="0.01" value={glide} onChange={e => setGlide(parseFloat(e.target.value))} className="w-full h-1 bg-zinc-800 accent-purple-500 appearance-none rounded-full" />
                       </div>
                       <div className="space-y-4">
-                        <div className="flex justify-between items-center"><span className="text-[7px] font-black uppercase text-zinc-500">Vibrato Depth</span><span className="text-[7px] text-white">{(vibratoDepth * 100).toFixed(0)}%</span></div>
+                        <div className="flex justify-between items-center"><span className="text-[7px] font-black uppercase text-zinc-500">Vibrato</span><span className="text-[7px] text-white">{(vibratoDepth * 100).toFixed(0)}%</span></div>
                         <input type="range" min="0" max="1" step="0.01" value={vibratoDepth} onChange={e => setVibratoDepth(parseFloat(e.target.value))} className="w-full h-1 bg-zinc-800 accent-blue-500 appearance-none rounded-full" />
                       </div>
                       <div className="space-y-4">
-                        <div className="flex justify-between items-center"><span className="text-[7px] font-black uppercase text-zinc-500">Thickness (Unison)</span><span className="text-[7px] text-white">{(unisonThickness * 100).toFixed(0)}%</span></div>
+                        <div className="flex justify-between items-center"><span className="text-[7px] font-black uppercase text-zinc-500">Thickness</span><span className="text-[7px] text-white">{(unisonThickness * 100).toFixed(0)}%</span></div>
                         <input type="range" min="0" max="1" step="0.01" value={unisonThickness} onChange={e => setUnisonThickness(parseFloat(e.target.value))} className="w-full h-1 bg-zinc-800 accent-emerald-500 appearance-none rounded-full" />
                       </div>
                       <div className="space-y-4">
@@ -592,22 +596,20 @@ const App: React.FC = () => {
                    </div>
                 </div>
                 
-                {/* Spatial Effects */}
                 <div className="pt-6 border-t border-white/5">
                    <h4 className="text-[8px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-6">Spatial Effects</h4>
                    <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-4">
-                        <div className="flex justify-between items-center"><span className="text-[7px] font-black uppercase text-zinc-500">Delay (Echo)</span><span>{(delayWet * 100).toFixed(0)}%</span></div>
+                        <div className="flex justify-between items-center"><span className="text-[7px] font-black uppercase text-zinc-500">Delay</span><span>{(delayWet * 100).toFixed(0)}%</span></div>
                         <input type="range" min="0" max="0.8" step="0.01" value={delayWet} onChange={e => setDelayWet(parseFloat(e.target.value))} className="w-full h-1 bg-zinc-800 accent-purple-400 appearance-none rounded-full" />
                       </div>
                       <div className="space-y-4">
-                        <div className="flex justify-between items-center"><span className="text-[7px] font-black uppercase text-zinc-500">Reverb (Space)</span><span>{(reverbWet * 100).toFixed(0)}%</span></div>
+                        <div className="flex justify-between items-center"><span className="text-[7px] font-black uppercase text-zinc-500">Reverb</span><span>{(reverbWet * 100).toFixed(0)}%</span></div>
                         <input type="range" min="0" max="0.8" step="0.01" value={reverbWet} onChange={e => setReverbWet(parseFloat(e.target.value))} className="w-full h-1 bg-zinc-800 accent-blue-400 appearance-none rounded-full" />
                       </div>
                    </div>
                 </div>
 
-                {/* ADSR Envelope */}
                 <div className="pt-6 border-t border-white/5">
                    <h4 className="text-[8px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-6">Envelope (ADSR)</h4>
                    <div className="grid grid-cols-2 gap-6">
@@ -628,7 +630,7 @@ const App: React.FC = () => {
               <div className="p-4 space-y-4">
                 <div className="flex justify-between items-center pb-2 border-b border-white/5">
                    <span className="text-[7px] font-black text-zinc-500 uppercase tracking-widest">Saved Recordings</span>
-                   <button onClick={() => setSkipSilences(!skipSilences)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[7px] font-black uppercase transition-all ${skipSilences ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg' : 'bg-zinc-900 border-zinc-800 text-zinc-600'}`}>
+                   <button onClick={() => setSkipSilences(!skipSilences)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[7px] font-black uppercase transition-all ${skipSilences ? 'bg-emerald-600 border-emerald-400 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-600'}`}>
                      <FastForward size={12} /> Skip Silences
                    </button>
                 </div>
@@ -724,22 +726,6 @@ const App: React.FC = () => {
             </div>
             <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5">
               <p className="text-[10px] leading-relaxed text-zinc-300 font-medium whitespace-pre-wrap">"{aiAnalysis.text}"</p>
-              {aiAnalysis.links && aiAnalysis.links.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
-                  <span className="text-[7px] font-black text-zinc-500 uppercase tracking-[0.2em]">References & Trends</span>
-                  <div className="flex flex-wrap gap-2">
-                    {aiAnalysis.links.map((link, idx) => {
-                      const data = link.web || link.maps;
-                      if (!data) return null;
-                      return (
-                        <a key={idx} href={data.uri} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-950 border border-white/5 rounded-lg text-[8px] text-purple-400 hover:bg-purple-600 hover:text-white transition-all">
-                          <ExternalLink size={10} /> {data.title || 'Source'}
-                        </a>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
             <button onClick={() => setAiAnalysis(null)} className="w-full bg-white text-black py-4 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-xl">Dismiss</button>
           </div>
