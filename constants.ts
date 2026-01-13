@@ -2,7 +2,7 @@ import { Instrument, ScaleType } from './types';
 
 export const MIN_NOTE_DURATION = 0.05;
 
-// Base URL per la maggior parte degli strumenti (Standard General MIDI)
+// Base URL per i suoni (FluidR3_GM)
 const MIDI_JS_BASE = "https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/FluidR3_GM/";
 
 export const INSTRUMENTS: Instrument[] = [
@@ -20,8 +20,8 @@ export const INSTRUMENTS: Instrument[] = [
   
   // BRASS
   { id: 'trumpet', name: 'JAZZ TRUMPET', category: 'BRASS' },
-  { id: 'brass_section', name: 'HORN SECTION', category: 'BRASS' },
   { id: 'trombone', name: 'TROMBONE SOLO', category: 'BRASS' },
+  { id: 'brass_section', name: 'HORN SECTION', category: 'BRASS' },
   
   // WOODWINDS
   { id: 'alto_sax', name: 'ALTO SAX', category: 'WOODWIND' },
@@ -37,13 +37,20 @@ export const INSTRUMENTS: Instrument[] = [
   { id: 'electric_guitar_muted', name: 'MUTED ELECTRIC', category: 'GUITAR' },
   { id: 'electric_guitar_jazz', name: 'JAZZ HOLLOW BODY', category: 'GUITAR' },
   { id: 'distortion_guitar', name: 'HEAVY DISTORTION', category: 'GUITAR' },
+  { id: 'banjo', name: 'BANJO', category: 'GUITAR' },
   
-  // BASS & OTHERS
+  // BASS
   { id: 'electric_bass_finger', name: 'ELECTRIC BASS', category: 'BASS' },
   { id: 'slap_bass_1', name: 'FUNK SLAP BASS', category: 'BASS' },
-  { id: 'banjo', name: 'BANJO SOLO', category: 'ETHNIC' },
+  
+  // PERCUSSION & OTHERS
   { id: 'marimba', name: 'MARIMBA', category: 'PERCUSSION' },
-  { id: 'music_box', name: 'MUSIC BOX', category: 'ETHNIC' }
+  { id: 'steel_drums', name: 'STEEL DRUMS', category: 'PERCUSSION' },
+  { id: 'tubular_bells', name: 'TUBULAR BELLS', category: 'PERCUSSION' },
+  { id: 'music_box', name: 'MUSIC BOX', category: 'PERCUSSION' },
+  { id: 'tinkle_bell', name: 'CRYSTAL BELLS', category: 'SYNTH' },
+  { id: 'synth_lead_1_square', name: 'SQUARE LEAD', category: 'SYNTH' },
+  { id: 'synth_lead_2_sawtooth', name: 'SAWTOOTH LEAD', category: 'SYNTH' }
 ];
 
 export const SCALES: Record<ScaleType, number[]> = {
@@ -54,30 +61,20 @@ export const SCALES: Record<ScaleType, number[]> = {
   CHROMATIC: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 };
 
-/**
- * Questa funzione genera automaticamente le mappe dei campioni per tutti gli strumenti
- * usando il formato richiesto da Tone.js o dal tuo player.
- */
-export const generateSampleMaps = () => {
-  const maps: Record<string, { urls: Record<string, string>, baseUrl: string }> = {};
+// Mappa automatica dei file MP3
+export const SAMPLE_MAPS: Record<string, { urls: Record<string, string>, baseUrl: string }> = {};
 
-  INSTRUMENTS.forEach(inst => {
-    maps[inst.id] = {
-      // Per questa libreria, i nomi dei file sono tipicamente note come "A0.mp3", "C1.mp3", ecc.
-      baseUrl: `${MIDI_JS_BASE}${inst.id}-mp3/`,
-      urls: {
-        'A0': 'A0.mp3', 'C1': 'C1.mp3', 'D#1': 'Ds1.mp3', 'F#1': 'Fs1.mp3',
-        'A1': 'A1.mp3', 'C2': 'C2.mp3', 'D#2': 'Ds2.mp3', 'F#2': 'Fs2.mp3',
-        'A2': 'A2.mp3', 'C3': 'C3.mp3', 'D#3': 'Ds3.mp3', 'F#3': 'Fs3.mp3',
-        'A3': 'A3.mp3', 'C4': 'C4.mp3', 'D#4': 'Ds4.mp3', 'F#4': 'Fs4.mp3',
-        'A4': 'A4.mp3', 'C5': 'C5.mp3', 'D#5': 'Ds5.mp3', 'F#5': 'Fs5.mp3',
-        'A5': 'A5.mp3', 'C6': 'C6.mp3', 'D#6': 'Ds6.mp3', 'F#6': 'Fs6.mp3',
-        'A6': 'A6.mp3', 'C7': 'C7.mp3'
-      }
-    };
-  });
-
-  return maps;
-};
-
-export const SAMPLE_MAPS = generateSampleMaps();
+INSTRUMENTS.forEach(inst => {
+  SAMPLE_MAPS[inst.id] = {
+    baseUrl: `${MIDI_JS_BASE}${inst.id}-mp3/`,
+    urls: {
+      'A0': 'A0.mp3', 'C1': 'C1.mp3', 'D#1': 'Ds1.mp3', 'F#1': 'Fs1.mp3',
+      'A1': 'A1.mp3', 'C2': 'C2.mp3', 'D#2': 'Ds2.mp3', 'F#2': 'Fs2.mp3',
+      'A2': 'A2.mp3', 'C3': 'C3.mp3', 'D#3': 'Ds3.mp3', 'F#3': 'Fs3.mp3',
+      'A3': 'A3.mp3', 'C4': 'C4.mp3', 'D#4': 'Ds4.mp3', 'F#4': 'Fs4.mp3',
+      'A4': 'A4.mp3', 'C5': 'C5.mp3', 'D#5': 'Ds5.mp3', 'F#5': 'Fs5.mp3',
+      'A5': 'A5.mp3', 'C6': 'C6.mp3', 'D#6': 'Ds6.mp3', 'F#6': 'Fs6.mp3',
+      'A6': 'A6.mp3', 'C7': 'C7.mp3'
+    }
+  };
+});
